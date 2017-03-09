@@ -1,10 +1,11 @@
 (de http NIL
-   (let Request (in Sock (line))
-      (prinl Request)
-      (out Sock (prinl "HTTP/1.0 200 OK^M"))
-      (in Sock (while (prinl (line))))
+   (let Request
+      (in Sock
+         (line)
+         (prinl Request)
+         (while (prinl (line))) )
       (out Sock
-         (prinl "access-control-allow-origin: *^M")
+         (prinl "HTTP/1.0 200 OK^M")
          (prinl "access-control-allow-headers: accept, content-type^M")
          (prinl "access-control-allow-methods: GET,HEAD,POST,DELETE,OPTIONS,PUT,PATCH^M")
          (prinl "Content-Length: 2^M")
@@ -21,4 +22,4 @@
       (close Sock) )
    (http) )
 
-(server 8080)
+(server 8088)
