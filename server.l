@@ -1,6 +1,5 @@
 (load "@lib/json.l")
 
-
 (de http (Sock Forked)
    (use (Request HeaderLine Header ContLen Posted Json)
       (in Sock
@@ -18,13 +17,19 @@
       (close Sock)
       (if Forked (bye)) ) )
 
-(de server (P)
+(de server-fork (P)
    (setq Port (port P))
    (loop
-    (setq Sock (listen Port))
-    # (NIL (fork) (close Port))
-      (http Sock)
-    (close Sock) )
-   (http Sock) )
+      (setq Sock (listen Port))
+      (NIL (fork) (close Port))
+      (close Sock) )
+   (http Sock T) )
 
-# (server 8088)
+(de server-nofork (P)
+   (setq Port (port P))
+   (loop
+      (setq Sock (listen Port))
+      (http Sock)
+      (close Sock) ) )
+
+# (server-fork 8088)
