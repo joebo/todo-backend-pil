@@ -1,5 +1,6 @@
 (load "@lib/json.l")
 
+(default *Todos NIL)
 (de respondJson (Sock Json)
    (use Data
 	(if Json (setq Data (in (pipe (printJson Json)) (line T))))
@@ -11,32 +12,37 @@
 	     (prinl "Content-Length: " (+ 1 (length Data)) "^M")
 	     (prinl "^M")
 	     (prinl Data) )) )
+
+(de route (Sock Request Posted)
+   (cond
+      ((pre? "POST" Request)
+         (setq Json (parseJson Posted))
+         (respondJson Sock Json) )
+      (T (respondJson Sock (list (cons "msg" "ok")))) ) )
+
 (de http NIL
-   (use (Request HeaderLine Header ContLen Posted Json)
-      (in Sock
-         (setq Request (line T))
-         (prinl Request)
-         (while (setq HeaderLine (line))
-            (setq HeaderParts (split HeaderLine " "))
-            (setq Header (lowc (pack (car HeaderParts))))
-            (if (= Header "content-length:")
-               (setq ContLen (format (cdr HeaderParts))) ) )
-         (when (pre? "POST" Request)
-            (setq Posted (pack (ht:Read ContLen))) ) )
-      (cond
-         ((pre? "POST" Request)
-            (setq Json (parseJson Posted))
-            (respondJson Sock Json) )
-         (T (respondJson Sock NIL)) )
-      (close Sock)
-      (bye) ) )
+    (use (Request HeaderLine Header ContLen Posted Json)
+	 (in Sock
+	     (setq Request (line T))
+	     (prinl Request)
+	     (while (setq HeaderLine (line))
+	       (setq HeaderParts (split HeaderLine " "))
+	       (setq Header (lowc (pack (car HeaderParts))))
+	       (if (= Header "content-length:")
+		   (setq ContLen (format (cdr HeaderParts))) ) )
+	     (when (pre? "POST" Request)
+	       (setq Posted (pack (ht:Read ContLen))) ) )
+	 (load "server.l")
+	 (route Sock Request Posted)
+	 (close Sock)
+	 (bye) ) )
 
 (de server (P)
-   (setq Port (port P))
-   (loop
-      (setq Sock (listen Port))
-      (NIL (fork) (close Port))
-      (close Sock) )
-   (http) )
+    (setq Port (port P))
+    (loop
+     (setq Sock (listen Port))
+     (NIL (fork) (close Port))
+     (close Sock) )
+    (http) )
 
-(server 8088)
+# (server 8088)
