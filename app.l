@@ -1,6 +1,8 @@
 (default *Todos NIL)
 (setq *BaseURL "http://csilo.com:8088")
 
+# todo matching can also be done with
+# (match (list ~(chop "GET /todos/") '@ID " " '@Version) Request)
 (de respondJson (Sock Json)
    (use Data
       (ifn Json
@@ -19,11 +21,14 @@
    (cond
       ((pre? "POST" Request)
          (setq Json (parseJson Posted))
-	 (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
-	 (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (length *Todos))))))
+         (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
+         (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))))
          (setq *Todos (append *Todos (list Json)))
          (respondJson Sock Json) )
       ((pre? "DELETE" Request)
          (setq *Todos NIL)
          (respondJson Sock (cons T *Todos)) )
+      ((pre? "GET /todos/" Request)
+         (let ID (format (last (split (cadr (split Request " ")) "/")))
+	      (respondJson Sock (car (nth *Todos ID)) ) ))
       (T (respondJson Sock (cons T *Todos))) ) )

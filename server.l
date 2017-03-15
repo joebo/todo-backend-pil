@@ -3,8 +3,8 @@
 (de http (Sock Forked)
    (use (Request HeaderLine Header ContLen Posted Json)
       (in Sock
-         (setq Request (line T))
-         (prinl Request)
+         (setq Request (line))
+         (if *Dbg (msg (pack Request)))
          (while (setq HeaderLine (line))
             (setq HeaderParts (split HeaderLine " "))
             (setq Header (lowc (pack (car HeaderParts))))
