@@ -10,7 +10,7 @@
             (setq Header (lowc (pack (car HeaderParts))))
             (if (= Header "content-length:")
                (setq ContLen (format (cdr HeaderParts))) ) )
-         (when (pre? "POST" Request)
+         (when (or (pre? "POST" Request) (pre? "PATCH" Request))
             (setq Posted (pack (ht:Read ContLen))) ) )
       (load "app.l")
       (route Sock Request Posted)

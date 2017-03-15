@@ -1,3 +1,5 @@
+# non-persisent version -- cannot fork as *Todos is not shared across processes
+
 (default *Todos NIL)
 (setq *BaseURL "http://csilo.com:8088")
 
@@ -24,6 +26,16 @@
 (de todo-from-route (Request)
     (car (nth *Todos (id-from-route Request))))
 
+# merges updates into a todo
+(de patch-todo (Patch Todo)
+    (mapc
+      '((X)
+         (if (assoc (car X) Todo)
+            (conc @ (cdr X))
+            (conc Todo (cons (cons (car X) (cdr X)))) ) )
+      Patch )
+    Todo )
+
 (de route (Sock Request Posted)
    (cond
       ((pre? "POST" Request)
@@ -37,4 +49,7 @@
          (respondJson Sock (cons T *Todos)) )
       ((pre? "GET /todos/" Request)
          (respondJson Sock (todo-from-route Request)) )
+      ((pre? "PATCH /todos/" Request)
+         (setq Json (parseJson Posted))
+         (respondJson Sock (patch-todo Json (todo-from-route Request))) )
       (T (respondJson Sock (cons T *Todos))) ) )
