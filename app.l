@@ -18,6 +18,7 @@
    (cond
       ((pre? "POST" Request)
          (setq Json (parseJson Posted))
+	 (ifn (assoc "completed" Json) (conc Json '(("completed" . false))))
          (setq *Todos (append *Todos (list Json)))
          (respondJson Sock Json) )
       ((pre? "DELETE" Request)
