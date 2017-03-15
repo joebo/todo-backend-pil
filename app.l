@@ -1,4 +1,5 @@
 (default *Todos NIL)
+(setq *BaseURL "http://csilo.com:8088")
 
 (de respondJson (Sock Json)
    (use Data
@@ -18,7 +19,8 @@
    (cond
       ((pre? "POST" Request)
          (setq Json (parseJson Posted))
-	 (ifn (assoc "completed" Json) (conc Json '(("completed" . false))))
+	 (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
+	 (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (length *Todos))))))
          (setq *Todos (append *Todos (list Json)))
          (respondJson Sock Json) )
       ((pre? "DELETE" Request)
