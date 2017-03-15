@@ -1,7 +1,14 @@
 (load "@lib/json.l")
 
+(default *App "app.l")
+(default *BaseURL "http://csilo.com")
+
+# reloads the app. useful after each request in debug mode to support hot-reloading (no need to restart pil)
+(de reload-routes ()
+    (if *Dbg (load *App) ) )
+
 (de http (Sock Forked)
-   (use (Request HeaderLine Header ContLen Posted Json)
+   (use (Request HeaderLine Header ContLen Posted HeaderParts)
       (in Sock
          (setq Request (line))
          (if *Dbg (msg (pack Request)))
@@ -12,24 +19,31 @@
                (setq ContLen (format (cdr HeaderParts))) ) )
          (when (or (pre? "POST" Request) (pre? "PATCH" Request))
             (setq Posted (pack (ht:Read ContLen))) ) )
-      (load "app.l")
+      (reload-routes)
       (route Sock Request Posted)
       (close Sock)
       (if Forked (bye)) ) )
 
+# not yet implemented... will be db version
 (de server-fork (P)
-   (setq Port (port P))
-   (loop
-      (setq Sock (listen Port))
-      (NIL (fork) (close Port))
-      (close Sock) )
-   (http Sock T) )
+   (use (Port Sock)
+      (setq *App "app-nopersist.l")
+      (setq *BaseURL (pack *BaseURL ":" P))
+      (setq Port (port P))
+      (loop
+         (setq Sock (listen Port))
+         (NIL (fork) (close Port))
+         (close Sock) )
+      (http Sock T) ) )
 
 (de server-nofork (P)
-   (setq Port (port P))
-   (loop
-      (setq Sock (listen Port))
-      (http Sock)
-      (close Sock) ) )
+   (use (Port Sock)
+      (setq *App "app-nopersist.l")
+      (setq *BaseURL (pack *BaseURL ":" P))
+      (setq Port (port P))
+      (loop
+         (setq Sock (listen Port))
+         (http Sock)
+         (close Sock) ) ) )
 
 # (server-fork 8088)

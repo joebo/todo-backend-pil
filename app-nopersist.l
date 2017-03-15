@@ -1,7 +1,7 @@
 # non-persisent version -- cannot fork as *Todos is not shared across processes
 
 (default *Todos NIL)
-
+(setq *BaseURL "http://csilo.com:8088")
 
 (de respondJson (Sock Json)
    (use Data
@@ -37,20 +37,19 @@
     Todo )
 
 (de route (Sock Request Posted)
-   (use (Json)
-      (cond
-         ((pre? "POST" Request)
-            (setq Json (parseJson Posted))
-            (ifn (assoc "completed" Json)
-               (conc Json (cons (cons "completed" 'false))) )
-            (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))))
-            (setq *Todos (append *Todos (list Json)))
-            (respondJson Sock Json) )
-         ((pre? "DELETE" Request)
-            (setq *Todos NIL)
-            (respondJson Sock (cons T *Todos)) )
-         ((pre? "GET /todos/" Request) (respondJson Sock (todo-from-route Request)))
-         ((pre? "PATCH /todos/" Request)
-            (setq Json (parseJson Posted))
-            (respondJson Sock (patch-todo Json (todo-from-route Request))) ) ) ) )
-
+   (cond
+      ((pre? "POST" Request)
+         (setq Json (parseJson Posted))
+         (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
+         (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))))
+         (setq *Todos (append *Todos (list Json)))
+         (respondJson Sock Json) )
+      ((pre? "DELETE" Request)
+         (setq *Todos NIL)
+         (respondJson Sock (cons T *Todos)) )
+      ((pre? "GET /todos/" Request)
+         (respondJson Sock (todo-from-route Request)) )
+      ((pre? "PATCH /todos/" Request)
+         (setq Json (parseJson Posted))
+         (respondJson Sock (patch-todo Json (todo-from-route Request))) )
+      (T (respondJson Sock (cons T *Todos))) ) )
