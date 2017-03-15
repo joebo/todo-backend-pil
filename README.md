@@ -10,3 +10,6 @@ Both versions are passing all tests
 1. server-fork - is the version that persists to the database. It can fork and support concurrent connections
 
         pil server.l -'server-fork 8088' +
+
+Tested using:
+http://www.todobackend.com/specs/index.html?http://csilo.com:8088
