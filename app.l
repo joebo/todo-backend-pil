@@ -1,8 +1,6 @@
 (default *Todos NIL)
 (setq *BaseURL "http://csilo.com:8088")
 
-# todo matching can also be done with
-# (match (list ~(chop "GET /todos/") '@ID " " '@Version) Request)
 (de respondJson (Sock Json)
    (use Data
       (ifn Json
@@ -17,6 +15,15 @@
          (prinl "^M")
          (prinl Data) ) ) )
 
+# extracts the id from the route
+# todo matching can also be done with
+# (match (list ~(chop "GET /todos/") '@ID " " '@Version) Request)
+(de id-from-route (Request)
+    (format (last (split (cadr (split Request " ")) "/"))))
+
+(de todo-from-route (Request)
+    (car (nth *Todos (id-from-route Request))))
+
 (de route (Sock Request Posted)
    (cond
       ((pre? "POST" Request)
@@ -29,6 +36,5 @@
          (setq *Todos NIL)
          (respondJson Sock (cons T *Todos)) )
       ((pre? "GET /todos/" Request)
-         (let ID (format (last (split (cadr (split Request " ")) "/")))
-	      (respondJson Sock (car (nth *Todos ID)) ) ))
+         (respondJson Sock (todo-from-route Request)) )
       (T (respondJson Sock (cons T *Todos))) ) )
