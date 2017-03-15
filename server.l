@@ -24,18 +24,6 @@
       (close Sock)
       (if Forked (bye)) ) )
 
-# not yet implemented... will be db version
-(de server-fork (P)
-   (use (Port Sock)
-      (setq *App "app-nopersist.l")
-      (setq *BaseURL (pack *BaseURL ":" P))
-      (setq Port (port P))
-      (loop
-         (setq Sock (listen Port))
-         (NIL (fork) (close Port))
-         (close Sock) )
-      (http Sock T) ) )
-
 (de server-nofork (P)
    (use (Port Sock)
       (setq *App "app-nopersist.l")
@@ -45,5 +33,19 @@
          (setq Sock (listen Port))
          (http Sock)
          (close Sock) ) ) )
+
+# not yet implemented... will be db version
+(de server-fork (P)
+   (use (Port Sock)
+      (setq *App "app.l")
+      (setq *BaseURL (pack *BaseURL ":" P))
+      (setq Port (port P))
+      (loop
+         (setq Sock (listen Port))
+         (NIL (fork) (close Port))
+         (close Sock) )
+      (http Sock T) ) )
+
+
 
 # (server-fork 8088)
