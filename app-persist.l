@@ -1,5 +1,24 @@
 # non-persisent version -- cannot fork as *Todos is not shared across processes
-(default *Todos NIL)
+
+(class +Todo +Entity)
+(rel nr (+Need +Key +Number))
+(rel title (+String))
+(rel completed (+Bool))
+(rel order (+Number))
+
+(dm toObj> NIL
+   (filter
+      prog
+      (list
+         (cons "title" (: title))
+         (if (: order) (cons "order" @))
+         (cons "completed" (if (: completed) 'true 'false))
+         (cons "url" (pack *BaseURL "/todos/" (: nr))) ) ) )
+
+
+# guards against NIL entities
+(de toObj (Entity)
+    (if Entity (toObj> Entity)) )
 
 (de respondJson (Sock Obj)
    (use Data
@@ -22,33 +41,34 @@
     (format (last (split (cadr (split Request " ")) "/"))))
 
 (de todo-from-route (Request)
-    (car (nth *Todos (id-from-route Request))))
+    (db 'nr '(+Todo) (id-from-route Request)) )
+
+(de todos NIL
+    (mapcar 'toObj> (collect 'nr '(+Todo))) )
 
 # merges updates into a todo
 (de patch-todo (Patch Todo)
-    (mapc
-      '((X)
-         (if (assoc (car X) Todo)
-            (conc @ (cdr X))
-            (conc Todo (cons (cons (car X) (cdr X)))) ) )
-      Patch )
+    (for X Patch  (put!> Todo (intern (car X)) (cdr X)))
     Todo )
 
+
 (de route (Sock Request Posted)
-   (use Json 
+   (use Json Todo
       (cond
          ((pre? "POST" Request)
             (setq Json (parseJson Posted))
-            (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
-            (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))))
-            (setq *Todos (append *Todos (list Json)))
-            (respondJson Sock Json) )
+	    (setq Todo (new! '(+Todo)
+		  'nr (genKey 'nr '+Todo)
+		  'title (cdr (assoc "title" Json))
+		  'completed (= 'true (cdr (assoc "completed" Json)))
+		  'order (cdr (assoc "order" Json))))
+            (respondJson Sock (toObj Todo)) )
          ((pre? "DELETE" Request)
-            (setq *Todos NIL)
-            (respondJson Sock (cons T *Todos)) )
+            (mapc 'lose!> (collect 'nr '(+Todo)))
+            (respondJson Sock (cons T (todos))) )
          ((pre? "GET /todos/" Request)
-            (respondJson Sock (todo-from-route Request)) )
+            (respondJson Sock (toObj (todo-from-route Request))) )
          ((pre? "PATCH /todos/" Request)
             (setq Json (parseJson Posted))
-            (respondJson Sock (patch-todo Json (todo-from-route Request))) )
-         (T (respondJson Sock (cons T *Todos))) ) ) )
+            (respondJson Sock (toObj (patch-todo Json (todo-from-route Request)))) )
+         (T (respondJson Sock (cons T (todos)))) ) ) )

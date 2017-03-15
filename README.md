@@ -1,8 +1,12 @@
 http://www.todobackend.com/ implementation for PicoLisp
 
-# Versions
-1. server-nofork - (DONE) is the non-persistent version. It requires a single process since it's not using the PicoLisp database
-1. server-fork - (IN PROGRESS) is the version that persists to the database. It can fork and support concurrent connections
+Both versions are passing all tests
 
-# Starting
+# Versions
+1. server-nofork - is the non-persistent version. It requires a single process since it's not using the PicoLisp database
+
         pil server.l -'server-nofork 8088' +
+
+1. server-fork - is the version that persists to the database. It can fork and support concurrent connections
+
+        pil server.l -'server-fork 8088' +

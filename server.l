@@ -34,10 +34,10 @@
          (http Sock)
          (close Sock) ) ) )
 
-# not yet implemented... will be db version
 (de server-fork (P)
+   (pool "todo.db")
    (use (Port Sock)
-      (setq *App "app.l")
+      (setq *App "app-persist.l")
       (setq *BaseURL (pack *BaseURL ":" P))
       (setq Port (port P))
       (loop
@@ -45,7 +45,5 @@
          (NIL (fork) (close Port))
          (close Sock) )
       (http Sock T) ) )
-
-
 
 # (server-fork 8088)
