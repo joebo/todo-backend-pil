@@ -1,4 +1,4 @@
-# non-persisent version -- cannot fork as *Todos is not shared across processes
+# persisent version -- uses PicoLisp database
 
 (class +Todo +Entity)
 (rel nr (+Need +Key +Number))
@@ -54,21 +54,24 @@
 
 (de route (Sock Request Posted)
    (use Json Todo
-      (cond
-         ((pre? "POST" Request)
-            (setq Json (parseJson Posted))
-	    (setq Todo (new! '(+Todo)
-		  'nr (genKey 'nr '+Todo)
-		  'title (cdr (assoc "title" Json))
-		  'completed (= 'true (cdr (assoc "completed" Json)))
-		  'order (cdr (assoc "order" Json))))
-            (respondJson Sock (toObj Todo)) )
-         ((pre? "DELETE" Request)
-            (mapc 'lose!> (collect 'nr '(+Todo)))
-            (respondJson Sock (cons T (todos))) )
-         ((pre? "GET /todos/" Request)
-            (respondJson Sock (toObj (todo-from-route Request))) )
-         ((pre? "PATCH /todos/" Request)
-            (setq Json (parseJson Posted))
-            (respondJson Sock (toObj (patch-todo Json (todo-from-route Request)))) )
-         (T (respondJson Sock (cons T (todos)))) ) ) )
+      (respondJson Sock 
+         (cond
+            ((pre? "POST" Request)
+               (setq Json (parseJson Posted))
+               (setq Todo (new! '(+Todo)
+                     'nr (genKey 'nr '+Todo)
+                     'title (cdr (assoc "title" Json))
+                     'completed (= 'true (cdr (assoc "completed" Json)))
+                     'order (cdr (assoc "order" Json))))
+               (toObj Todo))
+            ((pre? "DELETE" Request)
+               (mapc 'lose!> (collect 'nr '(+Todo)))
+               (cons T (todos)) )
+            ((pre? "GET /todos/" Request)
+               (toObj (todo-from-route Request)) )
+            ((pre? "PATCH /todos/" Request)
+               (setq Json (parseJson Posted))
+               (toObj (patch-todo Json (todo-from-route Request))) )
+            (T (cons T (todos))) ) ) ) )
+ 
+

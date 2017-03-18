@@ -35,20 +35,21 @@
     Todo )
 
 (de route (Sock Request Posted)
-   (use Json 
-      (cond
-         ((pre? "POST" Request)
-            (setq Json (parseJson Posted))
-            (ifn (assoc "completed" Json) (conc Json (cons (cons "completed" 'false))))
-            (ifn (assoc "url" Json) (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))))
-            (setq *Todos (append *Todos (list Json)))
-            (respondJson Sock Json) )
-         ((pre? "DELETE" Request)
-            (setq *Todos NIL)
-            (respondJson Sock (cons T *Todos)) )
-         ((pre? "GET /todos/" Request)
-            (respondJson Sock (todo-from-route Request)) )
-         ((pre? "PATCH /todos/" Request)
-            (setq Json (parseJson Posted))
-            (respondJson Sock (patch-todo Json (todo-from-route Request))) )
-         (T (respondJson Sock (cons T *Todos))) ) ) )
+   (use Json
+      (respondJson
+         Sock
+         (cond
+            ((pre? "POST" Request)
+               (setq Json (parseJson Posted))
+               (ifn (assoc "completed" Json)
+                  (conc Json (cons (cons "completed" 'false))) )
+               (ifn (assoc "url" Json)
+                  (conc Json (cons (cons "url" (pack *BaseURL "/todos/" (+ 1 (length *Todos)))))) )
+               (setq *Todos (append *Todos (list Json)))
+               Json )
+            ((pre? "DELETE" Request) (setq *Todos NIL) (cons T *Todos))
+            ((pre? "GET /todos/" Request) (todo-from-route Request))
+            ((pre? "PATCH /todos/" Request)
+               (setq Json (parseJson Posted))
+               (patch-todo Json (todo-from-route Request)) )
+            (T (cons T *Todos)) ) ) ) )
